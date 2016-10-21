@@ -37,8 +37,7 @@ let http_rpc_send_query fd request =
 	Unixext.really_write_string fd (Http.Request.to_wire_string request)
 
 (* Internal exception thrown when reading a newline-terminated HTTP header when the 
-   connection is closed *)
-exception Http_header_truncated of string
+   connection is closed *) exception Http_header_truncated of string
 
 (* Tediously read an HTTP header byte-by-byte. At some point we need to add buffering
    but we'll need to encapsulate our file descriptor into more of a channel-like object
@@ -61,7 +60,23 @@ let input_line_fd (fd: Unix.file_descr) =
 	done;
 	Buffer.contents buf
 
+let whole_string_fd (fd: Unix.file_descr) =
+    let buf = Buffer.create 4096 in
+    let finished = ref false in
+    while not(!finished) do
+        let buffer = " " in
+        let read = Unix.read fd buffer 0 1 in
+        if read = 1 then begin
+            Buffer.add_char buf buffer.[0];
+            if buffer = "\0"
+            then finished := true
+        end
+    done;
+    Unix.lseek fd 0 Unix.SEEK_SET;
+    Buffer.contents buf
+
 let response_of_fd_exn_slow fd =
+    debug "[kunmDebug] func(response_of_fd_exn_slow) in"
 	let task_id = ref None in
 	let content_length = ref None in
 
@@ -110,6 +125,7 @@ let response_of_fd_exn_slow fd =
 
 (** [response_of_fd_exn fd] returns an Http.Response.t object, or throws an exception *)
 let response_of_fd_exn fd =
+    debug "[kunmDebug] func(response_of_fd_exn) in";
 	let buf = String.create 1024 in
 	let b = Http.read_http_response_header buf fd in
 	let buf = String.sub buf 0 b in
@@ -144,6 +160,9 @@ let response_of_fd_exn fd =
 
 (** [response_of_fd fd] returns an optional Http.Response.t record *)
 let response_of_fd ?(use_fastpath=false) fd =
+    let fdlen = Unix.lseek fd 0 Unix.SEEK_END in
+    Unix.lseek fd 0 Unix.SEEK_SET;
+    debug "[kunmDebug] func(response_of_fd) response size:%d, string:%s\n" fdlen (whole_string_fd fd);
 	try
 		if use_fastpath
 		then Some(response_of_fd_exn fd)
@@ -173,4 +192,5 @@ let http_rpc_recv_response use_fastpath error_msg fd =
 let rpc ?(use_fastpath=false) (fd: Unix.file_descr) request f =
 (*	Printf.printf "request = [%s]" (Http.Request.to_wire_string request);*)
 	http_rpc_send_query fd request;
+    debug "[kunmDebug] func(rpc) request:%s\n" (Http.Request.to_string request);
 	f (http_rpc_recv_response use_fastpath (Http.Request.to_string request) fd) fd
