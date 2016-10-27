@@ -74,7 +74,7 @@ let whole_string_fd (fd: Unix.file_descr) =
     Buffer.contents buf
 
 let response_of_fd_exn_slow fd =
-    debug "[kunmDebug] func(response_of_fd_exn_slow) in"
+    debug "[kunmDebug] func(response_of_fd_exn_slow) in";
 	let task_id = ref None in
 	let content_length = ref None in
 
