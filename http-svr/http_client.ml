@@ -63,14 +63,12 @@ let input_line_fd (fd: Unix.file_descr) =
 let whole_string_fd (fd: Unix.file_descr) =
     let buf = Buffer.create 4096 in
     let finished = ref false in
+    let buffer = String.create 1024 in
     while not(!finished) do
-        let buffer = " " in
-        let read = Unix.read fd buffer 0 1 in
-        if read = 1 then begin
-            Buffer.add_char buf buffer.[0];
-            if buffer = "\0"
-            then finished := true
-        end
+        Bytes.fill buffer 0 1024 0;
+        let read = Unix.read fd buffer 0 1024 in
+        Buffer.add_string buf buffer;
+        if read < 1024 then finished := true
     done;
     Unix.lseek fd 0 Unix.SEEK_SET;
     Buffer.contents buf
