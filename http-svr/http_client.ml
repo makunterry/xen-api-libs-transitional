@@ -65,7 +65,7 @@ let whole_string_fd (fd: Unix.file_descr) =
     let finished = ref false in
     let buffer = String.create 1024 in
     while not(!finished) do
-        Bytes.fill buffer 0 1024 '\0';
+        Bytes.fill buffer 0 1024 (char_of_int 0);
         let read = Unix.read fd buffer 0 1024 in
         Buffer.add_string buf buffer;
         if read < 1024 then finished := true
