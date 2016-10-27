@@ -59,9 +59,11 @@ let input_line_fd (fd: Unix.file_descr) =
 			else raise (Http_header_truncated (Buffer.contents buf));
 		end
 	done;
+    debug "[kunmDebug] input_line_fd ==> buf's content == %s\n" Buffer.contents buf;
 	Buffer.contents buf
 
 let response_of_fd_exn_slow fd =
+    debug "[kunmDebug] response_of_fd_exn_slow <==\n";
 	let task_id = ref None in
 	let content_length = ref None in
 
@@ -110,8 +112,10 @@ let response_of_fd_exn_slow fd =
 
 (** [response_of_fd_exn fd] returns an Http.Response.t object, or throws an exception *)
 let response_of_fd_exn fd =
+    debug "[kunmDebug] response_of_fd_exn <==\n";
 	let buf = String.create 1024 in
 	let b = Http.read_http_response_header buf fd in
+    debug "[kunmDebug] response_of_fd_exn ==> buf: %s\n" buf;
 	let buf = String.sub buf 0 b in
 
 	let open Http.Response in
@@ -144,6 +148,7 @@ let response_of_fd_exn fd =
 
 (** [response_of_fd fd] returns an optional Http.Response.t record *)
 let response_of_fd ?(use_fastpath=false) fd =
+    debug "[kunmDebug] response_of_fd <==\n";
 	try
 		if use_fastpath
 		then Some(response_of_fd_exn fd)
