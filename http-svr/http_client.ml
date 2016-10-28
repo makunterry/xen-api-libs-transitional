@@ -59,7 +59,7 @@ let input_line_fd (fd: Unix.file_descr) =
 			else raise (Http_header_truncated (Buffer.contents buf));
 		end
 	done;
-    debug "[kunmDebug] input_line_fd ==> buf's content == %s\n" Buffer.contents buf;
+    debug "[kunmDebug] input_line_fd ==> buf's content == %s\n" (Buffer.contents buf);
 	Buffer.contents buf
 
 let response_of_fd_exn_slow fd =
